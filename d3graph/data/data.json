@@ -1,0 +1,159 @@
+{
+  "nodes": [
+    {
+      "id": "red",
+      "description": "red description",
+      "team": "sales",
+      "linkedId": ["orange"],
+      "nodeData":{
+       "description" : "lorem ipsum"
+      }
+    },
+    {
+      "id": "orange",
+      "description": "orange description",
+      "team": "sales",
+      "linkedId": [],
+      "nodeData":{
+        "description" : "lorem ipsum"
+      }
+    },
+    {
+      "id": "yellow",
+      "description": "yellow description",
+      "team": "sales",
+      "linkedId": [],
+      "nodeData":{
+        "description" : "lorem ipsum"
+      }
+    },
+    {
+      "id": "green",
+      "description": "green description",
+      "team": "sales",
+      "linkedId": [],
+      "nodeData":{
+        "description" : "lorem ipsum"
+      }
+    },
+    {
+      "id": "blue",
+      "description": "blue description",
+      "team": "sales",
+      "linkedId": [],
+      "nodeData":{
+        "description" : "lorem ipsum"
+      }
+    },
+    {
+      "id": "violet",
+      "description": "violet description",
+      "team": "sales",
+      "linkedId": [],
+      "nodeData":{
+        "description" : "lorem ipsum"
+      }
+    },
+
+    {
+      "id": "Brown",
+      "description": "description",
+      "team": "client",
+      "linkedId": [],
+      "nodeData":{
+        "description" : "lorem ipsum"
+      }
+    },
+
+    {
+      "id": "BurlyWood",
+      "description": "description",
+      "team": "client",
+      "linkedId": [],
+      "nodeData":{
+        "description" : "lorem ipsum"
+      }
+    },
+    {
+      "id": "coral",
+      "description": "description",
+      "team": "client",
+      "linkedId": [],
+      "nodeData":{
+        "description" : "lorem ipsum"
+      }
+    },
+    {
+      "id": "cyan",
+      "description": "description",
+      "team": "client",
+      "linkedId": [],
+      "nodeData":{
+        "description" : "lorem ipsum"
+      }
+    },
+    {
+      "id": "darkred",
+      "description": "description",
+      "team": "client",
+      "linkedId": [],
+      "nodeData":{
+        "description" : "lorem ipsum"
+      }
+    },
+    {
+      "id": "deeppink",
+      "description": "description",
+      "team": "client",
+      "linkedId": [],
+      "nodeData":{
+        "description" : "lorem ipsum"
+      }
+    },
+    {
+      "id": "greenyellow",
+      "description": "description",
+      "team": "client",
+      "linkedId": [],
+      "nodeData":{
+        "description" : "lorem ipsum"
+      }
+    },
+    {
+      "id": "lightsalmon",
+      "description": "description",
+      "team": "client",
+      "linkedId": ["red"],
+      "nodeData":{
+        "description" : "lorem ipsum"
+      }
+    },
+    {
+      "id": "navy",
+      "description": "description",
+      "team": "client",
+      "linkedId": ["red"],
+      "nodeData":{
+        "description" : "lorem ipsum"
+      }
+    },
+    {
+      "id": "springgreen",
+      "description": "description",
+      "team": "client",
+      "linkedId": ["red"],
+      "nodeData":{
+        "description" : "lorem ipsum"
+      }
+    },
+    {
+      "id": "powderblue",
+      "description": "description",
+      "team": "client",
+      "linkedId": [],
+      "nodeData":{
+        "description" : "lorem ipsum"
+      }
+    }
+  ]
+}

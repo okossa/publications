@@ -1,0 +1,44 @@
+<html>
+<head>
+<title>Tutorial Dc.js</title>
+</head>
+<link rel="stylesheet" type="text/css" href="src/css/dc.css" />
+<link rel="stylesheet" type="text/css" href="custom.css" />
+    
+    <style>
+    .header{
+        border-bottom-style: solid;
+        border-bottom-color: black;
+        border-bottom-width: thin;
+    }
+    </style>
+<body>
+    <div id="data-table" 
+         style='margin-left:25px;margin-right:40px;'>
+        <div class="header">
+            <span>Spent by person</span>
+        </div>
+    </div>
+    
+     <div id='chart-ring-year' style='margin-left:30px;margin-top:15px;'></div>
+     <div id='chart-hist-spend' style='margin-left:30px;margin-top:15px;'></div>
+     <div id='chart-row-spenders'></div>
+     <div id='chart-line-spenders' style='margin-left:0px;'></div>   
+    
+   
+    
+</body>
+<script type="text/javascript" src="src/js/jquery.min.js"></script>
+<script type="text/javascript" src="src/js/queue.v1.min.js"></script>
+<script type="text/javascript" src="src/js/d3.js" charset="utf-8" ></script>
+<script type="text/javascript" src="src/js/crossfilter.js"></script>
+<script type="text/javascript" src="src/js/dc.js"></script>    
+<script type="text/javascript" src="src/js/require.js"></script>
+   
+<script>
+        require.config({
+                baseUrl: './src/'
+        });
+        require(['main']);    
+</script>
+</html>

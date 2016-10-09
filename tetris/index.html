@@ -1,0 +1,49 @@
+<html>
+<head>
+    <title>Tetris</title>
+    <link rel="stylesheet" href="styles/main.css">
+</head>
+
+<style>
+    body{
+        display: flex;
+    }
+    #containerId{
+        width: 160px;
+        height: 320px;
+        margin-left: 400px;
+    }
+
+    #legend{
+        padding-top:50px;
+    }
+</style>
+
+<body>
+    <div id="containerId"></div>
+
+    <div id="legend">
+        <ul>
+            <li>to play, click on the game</li>
+            <li>left / right to move the piece</li>
+            <li>space to rotate</li>
+        </ul>
+    </div>
+</body>
+
+
+<script src="lib/react-15.js"></script>
+<script src="lib/reactDom.js"></script>
+<script src="lib/browser.min.js"></script>
+
+<script src="components/block.js"></script>
+<script src="components/world.js"></script>
+<script src="components/piece.js"></script>
+<script src="components/pile.js"></script>
+<script type="text/babel" src="game.jsx"></script>
+
+<script type="text/babel">
+    var mountNode = document.getElementById('containerId');
+    ReactDOM.render(<Game/>, mountNode);
+</script>
+</html>

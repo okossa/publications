@@ -1,0 +1,23 @@
+.itsOverClass{
+    position:absolute;
+    top:0;
+    bottom:0;
+    right:0;
+    left: 0;
+    opacity:0.8;
+    background-color: yellow;
+    color:red;
+    display: none;
+}
+
+.itsOverClass.visible{
+    display: block;
+}
+
+.itsOverClass .title{
+    position:absolute;
+    top:30%;
+    left:30%;
+    font-size:30px;
+}
+
