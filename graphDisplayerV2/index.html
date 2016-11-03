@@ -1,0 +1,36 @@
+<html>
+<meta charset="utf-8">
+<head>
+        <title>immersion test</title>
+        <link rel="stylesheet" href="app.css">
+</head>
+<body>
+        <div style="position:absolute;top:10px;">
+            <h1>SVG Render</h1>
+            <button onclick="window.activateRadial()">activate radial</button>
+            <button onclick="window.activateCluster()">activate cluster</button>
+            <input type="text" id="searchednode">
+            <button onclick="window.search()" >search</button>
+            <span>progress : &nbsp;</span><span id="progress"></span>
+        </div>
+
+
+        <svg id='mainSVG' class="big-svg" width="960" height="960" style="z-index:1"></svg>
+        <svg id='mainMiniSVG' class="mini-svg"></svg>
+</body>
+
+<!--d3-->
+<script src="graphRenderer/lib/d3.v4.js"></script>
+
+<!--data-->
+<script src="test_data/datagenerator.js"></script>
+
+<script src="datastructure/immersionTree.js"></script>
+
+<script src="graphRenderer/svgRenderer.js"></script>
+<script src="graphRenderer/forceLayoutManager.js"></script>
+<script src="graphRenderer/renderer.js"></script>
+
+<script src="main.js"></script>
+
+</html>
