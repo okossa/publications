@@ -1,1 +1,1 @@
-# publications
+# basic repository for my publications

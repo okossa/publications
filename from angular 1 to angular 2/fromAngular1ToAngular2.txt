@@ -1,0 +1,181 @@
+https://www.quora.com/What-is-the-difference-between-AngularJs-and-Angular-2
+
+
+###################################################################################################################################################
+###################################################################################################################################################
+working with angular 2
+
+The background: 
+When I started my brand new project with Angular 2, I was not really sure about I was to found.
+I’have been working with angular 1 for at leat 3 years, and I have been involved in various project in various context.
+
+First what I love about angular 1 was at the time when it cames out :
+(voir http://blog.backand.com/pros-and-cons-of-angularjs/)
+1 - Two-way data binding :
+Referred to as two-way data binding, it ensures that changes made to view are instantly displayed in the model and vice-versa.
+
+2 - DOM manipulation :
+Unlike Jquery which was huge at that time, Angular conveniently relieves the developer of actively manipulating DOM
+
+
+3 - Highly testable products
+
+4 - The MVVM architecture
+
+5 -  directives
+
+6 - The Plain HTML templates
+
+7 — Enable quick prototyping and delivery of dashboard style ( heavy on data driven forms, charts, lists)
+
+8 - Dependency injection system
+
+
+
+What i hate about angular 1
+
+1 - The scopes : easy to use but hard to debug
+
+2 - Documentation: Documentation is not up to date
+
+3 - Search Engine indexability
+
+4 - complexity of some concept: dependency injection, services / factory / values and so on..
+
+5 - Performance after heavy watcher usage
+
+
+
+then comes angular 2.
+
+After 4 month of heavy usage, it seems to me angular 2 brings :
+
+Angular 2 shares some concepts with its predecessor 
+– the special HTML templating syntax (6), 
+- directives/components to modify the DOM (5), 
+- dependency injection to including everything you’ll need to make an app – router, HTTP service, etc. (8)
+
+
+
+cons :
+Angular 2 suffers from complexity because of TypeScript.
+It’s configuration over convention!
+The syntax is just too off-putting.
+
+
+so here comes the final question: do you really need to upgrade ?
+
+Your existing Angular 1 code will need some serious changes to work with Angular 2. It’s not like a drop-in replacement where 60% of your code might kinda-sorta work: nothing will work out of the box. This is what I mean when I say Angular 2 isn’t really an “update” to Angular 1.
+
+This is important to keep in mind: if your Angular 1.x app is working fine, it’s worth considering whether you need to change anything at all.
+
+
+
+others stuff
+###################################################################################################################################################
+###################################################################################################################################################
+#################anguar cli ( systemjs vs webpack )#####
+If you've ever gone through the Angular 2 Quickstart over the past year, you'll know that a big part of getting started with Angular 2 is the setup.
+
+It included things like:
+
+Creating our app files
+Configuring TypeScript and Typings
+Adding script tags for
+Angular 2
+Rx.js
+System.js
+Configuring System.js
+Creating our Angular 2 component
+Bootstrapping our Angular 2 application
+Talk about a lot! Thankfully, at ng-conf 2016, the Angular team announced a tool that will make creating and scaffolding Angular 2 applications incredibly easy.
+
+That's it! Now we can start using the CLI to build out our applications.
+It's important to take note of this directory structure and where the files are located because the application that the Angular CLI generates follows the recommended app structure and style guide.
+
+The majority of our application is under src/app. This is where we will be working and everything that gets compiled and is available to our final application will be built to the public folder.
+
+Learn from this and incorporate these things into your own development. The Angular CLI will not only create the files and folders, it will also install any npm dependencies required.
+
+ANGULAR CLI SERVE FEATURES
+
+ng serve
+
+#What features are given to us with our new server?
+
+Built with BrowserSync: Reload on saves
+Automatically routed for us
+Found in the browser at http://localhost:4200
+Simplicity and ease-of-mind
+
+
+###
+ng build
+ng test: Run unit tests with karma
+ng e2e: Run end-to-end tests with protractor
+ng get: Gets values for project
+ng set: Sets values for project
+ng github-pages:deploy: Build the app for production, setup GitHub repo, and publish
+ng lint: Run codelyzer to analyze code
+ng format
+ng doc
+ng version: Get the version of the CLI
+
+
+The Angular CLI is an amazing tool and one that comes at a time when more and more people are getting into Angular 2 development. After all the announcments at ng-conf 2016, now is the time to dive in.
+
+The CLI makes diving in that much more accessible since setup, which took up the majority of the time for first-time developers is now handled for us.
+
+
+###################################################################################################################################################
+###################################################################################################################################################
+
+#component annoation and inheritance
+Component Inheritance in Angular 2.3 covers all of the following:
+
+Metadata (decorators): metadata (e.g. @Input(), @Output), etc. defined in a derived class will override any previous metadata in the inheritance chain otherwise the base class metadata will be used.
+
+Constructor: the base class constructor will be used if the derived class doesn’t have one, this mean that all the services you injected in parent constructor will be inherited to child component as well.
+
+Lifecycle hooks: parent lifecycle hooks (e.g. ngOnInit, ngOnChanges) will be called even when are not defined in the derived class.
+Component inheritance DO NOT cover templates and styles. Any shared DOM or behaviours must be handled separately.
+
+# Building with Component Inheritance
+
+Let's start with a simple use case.
+
+Someone wrote a pagination component. You like the component and its logic. The functionality is exactly what you are looking for. You want to use it, but you want to apply your own styles.
+
+Here's a quick look at what we'll be building.
+
+###################################################################################################################################################
+###################################################################################################################################################
+
+
+
+#2 way binding
+https://www.themarketingtechnologist.co/introduction-to-data-binding-in-angular-2-versus-angular-1/
+
+
+
+###################################################################################################################################################
+###################################################################################################################################################
+
+angular 2 routing #authgard
+http://blog.thoughtram.io/angular/2016/06/14/routing-in-angular-2-revisited.html
+
+
+###################################################################################################################################################
+###################################################################################################################################################
+
+
+
+#how it works inside
+#rxjs
+https://ievangelist.github.io/blog/angular-2-http/
+
+###################################################################################################################################################
+###################################################################################################################################################
+
+#source 
+http://erminesoft.com/what-are-the-pros-and-cons-of-angularjs-vs-reactjs/ angularjs vs reactjs

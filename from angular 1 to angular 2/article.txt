@@ -1,0 +1,26 @@
+
+# intro angular 2
+    when it started
+    how it positionned itself versus angular 1
+    how it position itseelf versus reactjs
+
+# what remains  
+    double binding / interpolation / double binding
+    routing
+    dependency injection
+    testing / mocking
+    component
+    services
+
+# what differs
+    multi purpose oriented ( like dom, or native )
+    change detection --> ng zone
+    mobile oriented first 
+    component oriented
+    typescript
+    angular cli
+    rxjs / services
+
+
+
+
