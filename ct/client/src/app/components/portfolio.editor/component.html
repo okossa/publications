@@ -1,0 +1,72 @@
+<div class='row'>
+    <div class="col-md-12 alert alert-danger" role="alert">
+        <span class="glyphicon glyphicon-exclamation-sign" aria-hidden="true"></span>
+        <span class="sr-only">Error:</span> Enter a valid email address
+    </div>
+</div>
+
+<div class="row" *ngIf='portfolio != null'>
+    <div class="col-md-12">
+        <h6>Edit Portfolio</h6>
+    </div>
+
+    <div class="col-md-8">
+
+        <ul class="list-group">
+            <li *ngFor="let cc of portfolio.counterPartyList" class="list-group-item">
+                <span *ngIf='cc!=null' (click)='selectCounterparty(cc)' class="badge">Edit</span>
+
+                <div>
+                    <span> <strong>{{cc.counterPartyName}}</strong></span><br>
+                    <span> {{cc.counterPartyDescription}}</span>
+                </div>
+            </li>
+        </ul>
+    </div>
+
+
+    <div class="col-md-4" *ngIf='selectedCounterParty!=null'>
+        <div class='panel panel-default'>
+            <div class="panel-heading">
+                Selected Counterparty
+            </div>
+            <div class="panel-body">
+                <strong>CounterParty id:</strong><input [(ngModel)]='selectedCounterParty.counterPartyId' type="text"><br>
+                <strong>CounterParty name:</strong><input [(ngModel)]='selectedCounterParty.counterPartyName' type="text"><br>
+                <strong>CounterPary Description:</strong> <input [(ngModel)]='selectedCounterParty.counterPartyDescription'
+                    type="text"><br>
+                <button class="btn btn-default navbar-btn" (click)='deleteCounterParty(selectedCounterParty)'>Delete</button>
+            </div>
+        </div>
+    </div>
+
+
+</div>
+
+<div class='row'>
+    <div class="col-md-4">
+        <span>Add counterparty</span>
+        <div class="input-group counterPartyInput">
+            <span class="input-group-addon" id="basic-addon1">CounterParty Id</span>
+            <input [(ngModel)]='newCounterPartyId' type="text" class="form-control" placeholder="Username" aria-describedby="basic-addon1">
+        </div>
+
+        <div class="input-group counterPartyInput">
+            <span class="input-group-addon" id="basic-addon1">CounterParty Name</span>
+            <input [(ngModel)]='newCounterPartyName' type="text" class="form-control" placeholder="Username" aria-describedby="basic-addon1">
+        </div>
+
+        <div class="input-group counterPartyInput">
+            <span class="input-group-addon" id="basic-addon1">CounterParty Description</span>
+            <input [(ngModel)]='newCounterPartyDescription' type="text" class="form-control" placeholder="Username" aria-describedby="basic-addon1">
+        </div>
+
+        <button class="btn btn-default navbar-btn" (click)='addCounterParty()'>Add Counterparty</button>
+    </div>
+</div>
+
+<div class='row'>
+    <div class="col-md-12">
+        <button class="btn btn-default navbar-btn" (click)="savePortfolio()">Save portfolio</button>
+    </div>
+</div>
