@@ -1,0 +1,72 @@
+<div class="row" *ngIf='portfolio != null'>
+    <div class="col-md-12">
+        <h4>Edit Portfolio</h4>
+    </div>
+
+    <div class="col-md-8">
+
+        <ul class="list-group">
+            <li *ngFor="let cc of portfolio.counterPartyList" class="list-group-item">
+                <span *ngIf='cc!=null' (click)='selectCounterparty(cc)' class="badge">Edit</span>
+
+                <div>
+                    <span> <strong>{{cc.counterPartyName}}</strong></span><br>
+                    <span> {{cc.counterPartyDescription}}</span>
+                </div>
+            </li>
+        </ul>
+    </div>
+
+
+    <div class="col-md-4" *ngIf='selectedCounterParty!=null'>
+        <div class='panel panel-default'>
+            <div class="panel-heading">
+                Selected Counterparty
+            </div>
+            <div class="panel-body">
+
+                <input class='form-control' [(ngModel)]='selectedCounterParty.counterPartyId' placeholder='BdrdId' type="text">
+                <br>
+
+                <input class='form-control' [(ngModel)]='selectedCounterParty.counterPartyName' placeholder='Name' type="text">
+                <br>
+
+                <input class='form-control' [(ngModel)]='selectedCounterParty.counterPartyDescription' placeholder='Description' type="text">
+                <br>
+
+                <button class='form-control' class="btn btn-default navbar-btn" (click)='deleteCounterParty(selectedCounterParty)'>Delete</button>
+
+            </div>
+        </div>
+    </div>
+
+
+</div>
+
+<div class='row'>
+    <div class="col-md-4">
+        <div class='panel panel-default'>
+            <div class="panel-heading">
+                <span>Add counterparty</span>
+            </div>
+            <div class="panel-body">
+                <input [(ngModel)]='newCounterPartyId' type="text" class="form-control" placeholder="Username" aria-describedby="basic-addon1">
+                <br>
+
+                <input [(ngModel)]='newCounterPartyName' type="text" class="form-control" placeholder="Username" aria-describedby="basic-addon1">
+                <br>
+
+                <input [(ngModel)]='newCounterPartyDescription' type="text" class="form-control" placeholder="Username" aria-describedby="basic-addon1">
+                <br>
+                <button class="btn btn-default navbar-btn" 
+                (click)='addCounterParty(newCounterPartyId, newCounterPartyName, newCounterPartyDescription)'>Add</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class='row'>
+    <div class="col-md-12">
+        <button class="btn btn-default navbar-btn" (click)="savePortfolio()">Save portfolio</button>
+    </div>
+</div>
