@@ -1,0 +1,57 @@
+﻿<?xml version="1.0" encoding="UTF-8"?>
+<ContentView xmlns="http://xamarin.com/schemas/2014/forms" 
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             x:Class="controls_experiments.PictureAttachmentView">
+    <ContentView.Content>
+        <Frame HasShadow="false" OutlineColor="#878787" Padding="0">
+            <Grid>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="3*" />
+                    <RowDefinition Height="7*" />
+                </Grid.RowDefinitions>
+
+                <!--header-->
+                <StackLayout Grid.Row="0" Grid.Column="0" x:Name="header" BackgroundColor="#e8ebef" Padding="20,5">
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition  Width="7*" />
+                            <ColumnDefinition  Width="3*" />
+                        </Grid.ColumnDefinitions>
+
+                        <StackLayout Grid.Column="0" 
+                                 VerticalOptions="Center"  
+                                 HorizontalOptions="Start">
+                            <Label TextColor="#878787" 
+                               FontSize = "15" Text="Attachment" 
+                               VerticalOptions="Center"  
+                               HorizontalOptions="Center" />
+                        </StackLayout>
+
+                        <Button Grid.Column="1" 
+                           TextColor="#878787" 
+                           FontSize = "15" 
+                           Text="X" 
+                           VerticalOptions="Center" 
+                           HorizontalOptions="End"
+                           Clicked="onDeleteAttachment" />
+
+                        
+                    </Grid>
+                </StackLayout>
+
+                <!--body-->
+                <StackLayout Grid.Row="1" Grid.Column="0" x:Name="body">
+                    <Label 
+                       x:Name="fileNameLabel"  
+                       VerticalOptions="Center" 
+                       HorizontalOptions="Center" 
+                       TextColor="#000000" 
+                       FontSize = "20"/>
+                </StackLayout>
+
+            </Grid>
+        </Frame>
+       
+
+    </ContentView.Content>
+</ContentView>
