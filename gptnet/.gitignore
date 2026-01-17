@@ -1,0 +1,19 @@
+# Model weights
+*.safetensors
+
+# .NET build outputs
+bin/
+obj/
+out/
+
+# IDE
+.vs/
+.vscode/
+*.user
+*.suo
+
+# macOS
+.DS_Store
+
+# Logs
+*.log

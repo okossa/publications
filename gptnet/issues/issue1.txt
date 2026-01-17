@@ -1,0 +1,37 @@
+Within the folder project/2026/gptnet
+
+# Issue #1: GPT-2 Learned Embedding Layers
+**Assignee:** Model Architect
+
+## Description
+Implement the input entry point. GPT-2 uses **Learned Absolute Position Embeddings**, where each position (0 to 1023) has a unique vector.
+
+## Acceptance Criteria
+​[ ] Input tensor shape [Batch, SeqLen] produces output shape [Batch, SeqLen, 768].
+​[ ] Position IDs are generated dynamically based on the input sequence length t.
+​[ ] Dropout is applied to the final summed embedding tensor.
+
+## Required Class Structure
+```csharp
+public class GPT2Embeddings : nn.Module<Tensor, Tensor> {
+    private readonly nn.Module<Tensor, Tensor> wte; // Token Embedding
+    private readonly nn.Module<Tensor, Tensor> wpe; // Position Embedding
+    private readonly nn.Module<Tensor, Tensor> drop;
+
+    public GPT2Embeddings(GPTConfig config) : base("Embeddings") {
+        wte = nn.Embedding(config.VocabSize, config.EmbDim);
+        wpe = nn.Embedding(config.ContextLength, config.EmbDim);
+        drop = nn.Dropout(config.Dropout);
+        RegisterComponents();
+    }
+
+    public override Tensor forward(Tensor inputIds) {
+        var t = inputIds.shape[1]; // Current sequence length
+        var pos = arange(0, t, device: inputIds.device);
+        
+        var tokEmb = wte.forward(inputIds);
+        var posEmb = wpe.forward(pos);
+        
+        return drop.forward(tokEmb + posEmb); // x = wte + wpe
+    }
+}

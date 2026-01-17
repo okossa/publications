@@ -1,0 +1,40 @@
+Within project/2026/ create a gptnet folder
+
+# Issue #0: Environment Setup, Configuration, and Hardware Orchestration
+**Assignee:** Infrastructure Agent
+
+## Description
+Establish the .NET 8.0 project foundation. This project must be configured to prioritize the **CUDA API** for all tensor operations to ensure high-performance GPT-2 inference.
+
+## Technical Specifications
+- **Project:** .NET 8.0 Console Application.
+- **Dependencies:** - `TorchSharp` (v0.105.2+)
+  - `TorchSharp-cuda-windows` (or Linux)
+  - `TorchSharp.PyBridge` (For Python weight compatibility)
+  - `Microsoft.ML.Tokenizers`
+
+## Acceptance Criteria
+​[ ] Project successfully targets .NET 8.0.
+​[ ] NuGet packages TorchSharp and TorchSharp-cuda-windows are installed and reachable.
+​[ ] DeviceManager.GetDevice() correctly returns CUDA when an NVIDIA GPU is present.
+​[ ] GPTConfig is implemented and used for initialization in subsequent modules.
+​
+
+## Required Class Structure
+```csharp
+using TorchSharp;
+using static TorchSharp.torch;
+
+public record GPTConfig(
+    int VocabSize = 50257,        // Standard GPT-2
+    int ContextLength = 1024,     // Max sequence
+    int EmbDim = 768,             // Embedding dimension
+    int NHeads = 12,              // Heads per block
+    int NLayers = 12,             // Total blocks
+    double Dropout = 0.1
+);
+
+public static class DeviceManager {
+    public static Device GetDevice() => cuda.is_available() ? CUDA : CPU;
+}
+

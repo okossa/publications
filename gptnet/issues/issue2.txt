@@ -1,0 +1,27 @@
+Within project/2026/gptnet folder
+
+# Issue #2: Causal Masking Logic
+**Assignee:** Math/Algo Engineer
+
+## Description
+Implement the lower-triangular mask that prevents the model from "cheating" by seeing future tokens during generation.
+
+## Required Logic
+Ensure the mask is applied to the raw attention scores before the Softmax operation.
+
+## Acceptance Criteria
+- [ ] Mask is a lower triangular matrix where `mask[i, j] = 0` for `j > i`.
+- [ ] Verification that `Softmax` output for future positions is effectively zero.
+- [ ] Masking logic correctly handles variable sequence lengths up to 1024.
+
+
+```csharp
+// Inside the Attention forward pass:
+// 1. Create mask
+var mask = torch.tril(ones(seqLen, seqLen)).view(1, 1, seqLen, seqLen).to(device);
+
+// 2. Apply to scores
+scores = scores.masked_fill(mask == 0, float.NegativeInfinity);
+
+// 3. Compute Softmax
+var attnWeights = nn.functional.softmax(scores, dim: -1);

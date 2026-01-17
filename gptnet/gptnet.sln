@@ -1,0 +1,24 @@
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.5.2.0
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "GPTNet", "GPTNet\GPTNet.csproj", "{DDBBF466-9D80-37D7-8F8E-0F1A3D29E0B8}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{DDBBF466-9D80-37D7-8F8E-0F1A3D29E0B8}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{DDBBF466-9D80-37D7-8F8E-0F1A3D29E0B8}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{DDBBF466-9D80-37D7-8F8E-0F1A3D29E0B8}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{DDBBF466-9D80-37D7-8F8E-0F1A3D29E0B8}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {E2571F8B-5537-4236-845B-999F223B3943}
+	EndGlobalSection
+EndGlobal

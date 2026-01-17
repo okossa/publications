@@ -1,0 +1,27 @@
+Within project/2026/gptnet folder
+
+# Issue #4: Feed-Forward Network with GELU Tanh
+**Assignee:** Deep Learning Agent
+
+## Description
+Implement the logic expansion ($768 \rightarrow 3072 \rightarrow 768$). Use the specific Tanh approximation for GELU.
+
+## Acceptance Criteria
+​[ ] Expansion layer c_fc produces a hidden dimension of 3,072.
+​[ ] GELU activation follows the specific Tanh approximation formula.
+​[ ] Final output shape is restored to 768.
+
+## Required Class Structure
+```csharp
+public class GPT2MLP : nn.Module<Tensor, Tensor> {
+    private readonly nn.Module<Tensor, Tensor> c_fc;   // Linear 768->3072
+    private readonly nn.Module<Tensor, Tensor> c_proj; // Linear 3072->768
+
+    public override Tensor forward(Tensor x) {
+        x = c_fc.forward(x);
+        x = Gelu(x); // Tanh approx
+        return c_proj.forward(x);
+    }
+
+    private Tensor Gelu(Tensor x) => 0.5 * x * (1 + tanh(sqrt(2.0/pi) * (x + 0.044715 * pow(x, 3))));
+}

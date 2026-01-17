@@ -1,0 +1,32 @@
+Within project/2026/gptnet folder
+
+# Issue #3: Multi-Head Causal Self-Attention Class
+**Assignee:** Deep Learning Agent
+
+## Description
+Implement the parallel attention mechanism. You must split the 768-dim vector into 12 heads of 64 dimensions each.
+
+## Acceptance Criteria
+​[ ] c_attn weights have the shape [768, 2304] (3 * 768).
+​[ ] Tensor head-splitting results in shape [Batch, 12, SeqLen, 64].
+​[ ] Final output projection returns tensor to original [Batch, SeqLen, 768] shape.
+
+## Required Class Structure
+```csharp
+public class CausalSelfAttention : nn.Module<Tensor, Tensor> {
+    private readonly nn.Module<Tensor, Tensor> c_attn; // Linear [768, 3*768]
+    private readonly nn.Module<Tensor, Tensor> c_proj; // Output projection
+
+    public override Tensor forward(Tensor x) {
+        var (B, T, C) = (x.shape[0], x.shape[1], x.shape[2]);
+        
+        // Split Q, K, V
+        var qkv = c_attn.forward(x).split(C, dim: 2);
+        var q = qkv[0].view(B, T, 12, C / 12).transpose(1, 2); 
+        // ... (repeat for k, v)
+        
+        // Compute Attention + Causal Mask (from Issue #2)
+        // ...
+        return c_proj.forward(y.transpose(1, 2).reshape(B, T, C));
+    }
+}

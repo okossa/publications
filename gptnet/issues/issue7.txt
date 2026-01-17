@@ -1,0 +1,22 @@
+Within project/2026/gptnet folder
+
+# Issue #7: Load Hugging Face Safetensors in C#
+**Assignee:** Systems Agent
+
+## Description
+Use `PyBridge` to load the `.safetensors` parameters. You must map the Python keys (e.g., `transformer.h.0`) to your local C# module keys.
+
+## Acceptance Criteria
+- [ ] Weights are successfully loaded without "Missing Key" or "Unexpected Key" errors.
+- [ ] Loaded weights are placed on the correct device (GPU/CUDA).
+- [ ] Verification that `nn.Embedding` and `nn.Linear` layers receive correct pre-trained values.
+
+## Required Code Structure
+```csharp
+using TorchSharp.PyBridge; //
+
+public void LoadModelWeights(GPT2Model model, string path) {
+    // Standard PyTorch key mapping logic
+    model.load_safetensors(path); 
+    Console.WriteLine("Weights successfully loaded via CUDA API bridge.");
+}

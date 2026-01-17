@@ -1,0 +1,28 @@
+Within project/2026/gptnet folder
+
+# Issue #5: Transformer Block with Residual Connections
+**Assignee:** Model Architect
+
+## Description
+Assemble the Attention and MLP into a single block using the **Pre-LayerNorm** pattern.
+
+## Acceptance Criteria
+​[ ] LayerNorm is applied before the Attention and MLP sub-modules.
+​[ ] Residual connections correctly add the module output to the previous state.
+​[ ] Internal LayerNorm epsilon is set to 1e-5.
+
+
+## Required Class Structure
+```csharp
+public class TransformerBlock : nn.Module<Tensor, Tensor> {
+    private readonly nn.Module<Tensor, Tensor> ln1, ln2, attn, mlp;
+
+    public override Tensor forward(Tensor x) {
+        // Pre-LN + Attention Residual
+        x = x + attn.forward(ln1.forward(x)); 
+        
+        // Pre-LN + MLP Residual
+        x = x + mlp.forward(ln2.forward(x)); 
+        return x;
+    }
+}
