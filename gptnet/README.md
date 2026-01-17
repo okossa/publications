@@ -7,6 +7,61 @@ A from-scratch implementation of GPT-2 (124M parameters) in C# using TorchSharp.
 - .NET 8.0 SDK
 - Pre-trained GPT-2 weights in safetensors format
 
+## Platform-Specific Setup
+
+The project requires platform-specific libtorch packages. These packages are large (~200MB+ for CPU, ~2GB+ for CUDA), so the first `dotnet restore` may take some time.
+
+### Windows Setup
+
+To run GPTNet on Windows, you need to modify the `.csproj` file to use Windows-compatible libtorch packages:
+
+1. **Modify the `.csproj` file** (`GPTNet/GPTNet.csproj`):
+   
+   Replace the macOS libtorch package reference:
+   ```xml
+   <PackageReference Include="libtorch-cpu-osx-x64" Version="2.2.1.1" />
+   ```
+   
+   With one of the following Windows packages:
+   
+   - **For CPU only**:
+     ```xml
+     <PackageReference Include="libtorch-cpu-win-x64" Version="2.2.1.1" />
+     ```
+   
+   - **For CUDA/GPU support** (requires NVIDIA GPU and CUDA 12.1 installed):
+     ```xml
+     <PackageReference Include="libtorch-cuda-12.1-win-x64" Version="2.2.1.1" />
+     ```
+
+2. **Restore and build**:
+   ```cmd
+   cd GPTNet
+   dotnet restore
+   dotnet build
+   ```
+
+3. **Running on Windows**:
+   
+   Since `gptnet.sh` is a shell script, you have these alternatives:
+   
+   - **Use .NET CLI directly**:
+     ```cmd
+     cd GPTNet
+     dotnet run -- --inference --prompt "Your prompt here" --weights ..\weights\gpt2_mini_model.safetensors
+     ```
+   
+   - **Use Git Bash or WSL**: If you have Git Bash or Windows Subsystem for Linux (WSL) installed, you can run the shell script:
+     ```bash
+     ./gptnet.sh -p "Your prompt here"
+     ```
+
+### macOS Setup
+
+The current setup works out of the box for macOS with the existing `libtorch-cpu-osx-x64` package reference in the `.csproj` file. No modifications are needed.
+
+For CUDA/GPU support on macOS with Apple Silicon, you can use the Metal Performance Shaders (MPS) backend, but this requires a different libtorch package configuration.
+
 ## Quick Start
 
 ### Generate Text
