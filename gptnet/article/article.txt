@@ -1,0 +1,605 @@
+Building GPT-2 from Scratch in C# with TorchSharp: A Deep Dive into LLM Architecture
+
+
+1. Introduction
+
+Large Language Models (LLMs) have transformed the landscape of natural language processing, but understanding their internal mechanics often feels like opening a black box. This article provides a comprehensive guide to building GPT-2, one of the foundational transformer-based language models, from scratch using C# and TorchSharp.
+
+By implementing GPT-2 in C#, you will gain deep insights into transformer architecture, attention mechanisms, and the engineering decisions that make these models work. Unlike high-level frameworks that abstract away implementation details, building from scratch forces you to understand every component—from token embeddings to causal masking to weight loading.
+
+This guide targets developers with C# experience who want to understand LLM internals at a fundamental level. By the end, you will have a working GPT-2 implementation capable of loading pre-trained weights from Hugging Face and generating coherent text.
+
+
+2. Prerequisites & Environment Setup
+
+Setting up the development environment correctly is crucial for GPU-accelerated deep learning in .NET. This section covers project configuration, dependency management, and hardware device selection.
+
+Project Setup
+
+Create a .NET 8.0 Console Application with the following dependencies:
+
+- TorchSharp (v0.105.2 or higher): The .NET bindings for PyTorch
+- TorchSharp-cuda-windows (or TorchSharp-cuda-linux): CUDA support for GPU acceleration
+- TorchSharp.PyBridge: Enables loading Python-format weights (safetensors)
+- Microsoft.ML.Tokenizers: Provides BPE tokenization compatible with GPT-2
+
+GPT Configuration
+
+The GPTConfig record defines all hyperparameters for the model architecture. GPT-2 uses specific values that match the original OpenAI implementation:
+
+namespace GPTNet.Config;
+
+public record GPTConfig(
+    int VocabSize = 50257,        // Standard GPT-2 vocabulary size
+    int ContextLength = 1024,     // Maximum sequence length
+    int EmbDim = 768,             // Embedding dimension (d_model)
+    int NHeads = 12,              // Number of attention heads per block
+    int NLayers = 12,             // Total transformer blocks
+    double Dropout = 0.1          // Dropout probability
+);
+
+These parameters define a GPT-2 "small" model with approximately 124 million parameters. The vocabulary size of 50,257 comes from GPT-2's BPE tokenizer, which includes 50,000 base tokens plus 256 byte-level tokens and one end-of-text token.
+
+Device Management
+
+Hardware acceleration dramatically improves inference speed. The DeviceManager class automatically detects CUDA availability and falls back to CPU when necessary:
+
+using TorchSharp;
+using static TorchSharp.torch;
+
+namespace GPTNet.Infrastructure;
+
+public static class DeviceManager
+{
+    private static Device? _device;
+
+    public static Device GetDevice()
+    {
+        if (_device is not null)
+            return _device;
+
+        _device = cuda.is_available() ? CUDA : CPU;
+        return _device;
+    }
+
+    public static string GetDeviceInfo()
+    {
+        var device = GetDevice();
+        if (device.type == DeviceType.CUDA)
+        {
+            return $"CUDA (GPU available)";
+        }
+        return "CPU";
+    }
+}
+
+This singleton pattern ensures device selection happens once at startup, avoiding repeated CUDA checks. When a CUDA-capable GPU is present, all tensor operations automatically execute on the GPU, providing 10-50x speedup over CPU inference.
+
+
+3. Token & Position Embeddings
+
+Neural networks operate on continuous vectors, not discrete tokens. The embedding layer transforms token IDs into dense vectors and adds positional information, creating the input representation for the transformer.
+
+GPT-2 uses two separate embedding tables:
+
+1. Token Embeddings (wte): Maps each vocabulary token to a 768-dimensional vector
+2. Position Embeddings (wpe): Learned absolute position encodings for each position (0 to 1023)
+
+Unlike positional encodings that use sinusoidal functions, GPT-2's position embeddings are learned parameters that the model optimizes during training. This allows the model to learn position-specific patterns in language.
+
+Implementation
+
+namespace GPTNet.Layers;
+
+public class GPT2Embeddings : nn.Module<Tensor, Tensor>
+{
+    public readonly Embedding wte; // Token Embedding
+    public readonly Embedding wpe; // Position Embedding
+    private readonly Dropout drop;
+
+    public GPT2Embeddings(GPTConfig config) : base("GPT2Embeddings")
+    {
+        wte = nn.Embedding(config.VocabSize, config.EmbDim);
+        wpe = nn.Embedding(config.ContextLength, config.EmbDim);
+        drop = nn.Dropout(config.Dropout);
+        
+        RegisterComponents();
+    }
+
+    public override Tensor forward(Tensor inputIds)
+    {
+        var t = inputIds.shape[1];
+        var pos = arange(0, t, dtype: ScalarType.Int64, device: inputIds.device);
+        
+        var tokEmb = wte.forward(inputIds);
+        var posEmb = wpe.forward(pos);
+        
+        return drop.forward(tokEmb + posEmb);
+    }
+
+    public Tensor GetTokenEmbeddingWeight() => wte.weight!;
+}
+
+The forward pass generates position IDs dynamically based on the input sequence length. Position embeddings broadcast across the batch dimension automatically, allowing the same positions to be reused for all sequences in a batch.
+
+Dropout is applied to the combined embedding to prevent overfitting. During inference, dropout is disabled automatically when the model is set to evaluation mode.
+
+
+4. Causal Masking
+
+Language models must be autoregressive—they can only use past context to predict future tokens. Causal masking enforces this constraint by preventing attention to future positions in the sequence.
+
+The mask is a lower-triangular matrix where mask[i,j] = 1 if j <= i, else 0. This means position i can attend to positions 0 through i, but not to positions i+1 through T.
+
+Before applying softmax to attention scores, future positions are masked by setting their scores to negative infinity. When softmax is applied, exp(-inf) becomes 0, effectively removing future tokens from the attention computation.
+
+Implementation
+
+namespace GPTNet.Utils;
+
+public static class CausalMask
+{
+    public static Tensor Create(long seqLen, Device device)
+    {
+        var mask = tril(ones(seqLen, seqLen, device: device));
+        return mask.view(1, 1, seqLen, seqLen);
+    }
+
+    public static Tensor Apply(Tensor scores, Tensor mask)
+    {
+        return scores.masked_fill(mask == 0, float.NegativeInfinity);
+    }
+}
+
+The mask is created once per forward pass and broadcasted across the batch and attention head dimensions. The shape [1, 1, seqLen, seqLen] allows it to broadcast to [batch, nHeads, seqLen, seqLen] during attention computation.
+
+Example: For a sequence of length 5, the causal mask looks like:
+
+1 0 0 0 0
+1 1 0 0 0
+1 1 1 0 0
+1 1 1 1 0
+1 1 1 1 1
+
+Each row represents what a token at that position can attend to. Token 0 can only attend to itself, token 1 can attend to tokens 0 and 1, and so on. This enforces left-to-right information flow.
+
+
+5. Multi-Head Causal Self-Attention
+
+The attention mechanism is the core innovation that makes transformers effective. Multi-head attention allows the model to simultaneously attend to different aspects of the input at different positions.
+
+Self-attention computes three vectors for each token:
+
+- Query (Q): What information am I looking for?
+- Key (K): What information do I contain?
+- Value (V): What information should I pass forward?
+
+Attention scores are computed as the scaled dot product of queries and keys. High scores indicate strong relevance between tokens. The scores are normalized with softmax and used to weight the values, producing the attention output.
+
+Multi-Head Mechanism
+
+Instead of computing attention once with 768 dimensions, GPT-2 splits the embedding into 12 heads of 64 dimensions each. Each head learns to focus on different linguistic features—some might capture syntactic relationships, others semantic meaning, and others positional patterns.
+
+Implementation
+
+namespace GPTNet.Layers;
+
+public class CausalSelfAttention : nn.Module<Tensor, Tensor>
+{
+    public readonly Linear c_attn;  // Combined Q, K, V projection [768 → 2304]
+    public readonly Linear c_proj;  // Output projection [768 → 768]
+    private readonly Dropout attn_dropout;
+    private readonly Dropout resid_dropout;
+    
+    private readonly int nHeads;
+    private readonly int headDim;
+
+    public CausalSelfAttention(GPTConfig config) : base("CausalSelfAttention")
+    {
+        nHeads = config.NHeads;
+        headDim = config.EmbDim / config.NHeads;  // 768 / 12 = 64
+
+        c_attn = nn.Linear(config.EmbDim, 3 * config.EmbDim);
+        c_proj = nn.Linear(config.EmbDim, config.EmbDim);
+        
+        attn_dropout = nn.Dropout(config.Dropout);
+        resid_dropout = nn.Dropout(config.Dropout);
+
+        RegisterComponents();
+    }
+
+    public override Tensor forward(Tensor x)
+    {
+        var B = x.shape[0];  // Batch size
+        var T = x.shape[1];  // Sequence length
+        var C = x.shape[2];  // Embedding dimension (768)
+
+        var qkv = c_attn.forward(x);
+        var qkvSplit = qkv.split(C, dim: 2);
+        var q = qkvSplit[0];
+        var k = qkvSplit[1];
+        var v = qkvSplit[2];
+
+        q = q.view(B, T, nHeads, headDim).transpose(1, 2);
+        k = k.view(B, T, nHeads, headDim).transpose(1, 2);
+        v = v.view(B, T, nHeads, headDim).transpose(1, 2);
+
+        var scale = Math.Sqrt(headDim);
+        var scores = torch.matmul(q, k.transpose(-2, -1)) / scale;
+
+        var mask = CausalMask.Create(T, x.device);
+        scores = CausalMask.Apply(scores, mask);
+
+        var attnWeights = nn.functional.softmax(scores, dim: -1);
+        attnWeights = attn_dropout.forward(attnWeights);
+
+        var y = torch.matmul(attnWeights, v);
+        y = y.transpose(1, 2).contiguous().view(B, T, C);
+
+        y = c_proj.forward(y);
+        y = resid_dropout.forward(y);
+
+        return y;
+    }
+}
+
+The c_attn layer performs a single linear projection that produces Q, K, and V simultaneously. This is more efficient than three separate projections. The output is split into three equal parts along the embedding dimension.
+
+Scaling by sqrt(headDim) prevents the dot product from growing too large, which would cause softmax to produce very peaked distributions and slow down training.
+
+After computing attention, the heads are concatenated back into the original 768-dimensional space and passed through a final projection (c_proj). This allows the model to learn how to combine information from different heads.
+
+
+6. Feed-Forward Network (MLP)
+
+After attention, each position passes through a position-wise feed-forward network. This MLP applies the same transformation to each position independently, without interaction between positions.
+
+The MLP consists of two linear transformations with a nonlinear activation in between. GPT-2 uses an expansion factor of 4, going from 768 dimensions to 3,072 dimensions and back to 768.
+
+GELU Activation
+
+GPT-2 uses the Gaussian Error Linear Unit (GELU) activation function instead of ReLU. GELU is a smooth, non-monotonic function that allows small negative values to pass through, unlike ReLU which zeros them out.
+
+The GELU formula with Tanh approximation is:
+
+GELU(x) = 0.5 * x * (1 + tanh(sqrt(2/π) * (x + 0.044715 * x³)))
+
+This approximation is faster to compute than the exact Gaussian CDF while maintaining similar behavior.
+
+Implementation
+
+namespace GPTNet.Layers;
+
+public class GPT2MLP : nn.Module<Tensor, Tensor>
+{
+    public readonly Linear c_fc;    // Expansion: 768 → 3072
+    public readonly Linear c_proj;  // Compression: 3072 → 768
+    private readonly Dropout dropout;
+
+    private static readonly double Sqrt2OverPi = Math.Sqrt(2.0 / Math.PI);
+
+    public GPT2MLP(GPTConfig config) : base("GPT2MLP")
+    {
+        int hiddenDim = 4 * config.EmbDim;  // 4 * 768 = 3072
+
+        c_fc = nn.Linear(config.EmbDim, hiddenDim);
+        c_proj = nn.Linear(hiddenDim, config.EmbDim);
+        dropout = nn.Dropout(config.Dropout);
+
+        RegisterComponents();
+    }
+
+    public override Tensor forward(Tensor x)
+    {
+        x = c_fc.forward(x);
+        x = Gelu(x);
+        x = c_proj.forward(x);
+        x = dropout.forward(x);
+        
+        return x;
+    }
+
+    private Tensor Gelu(Tensor x)
+    {
+        var inner = Sqrt2OverPi * (x + 0.044715 * pow(x, 3));
+        return 0.5 * x * (1.0 + tanh(inner));
+    }
+}
+
+The expansion to 3,072 dimensions provides the model with additional representational capacity. The MLP can be thought of as learning a collection of feature detectors that activate for different patterns in the input.
+
+
+7. Transformer Block
+
+A transformer block combines the attention and MLP layers with residual connections and layer normalization. GPT-2 uses the "Pre-LayerNorm" architecture, where normalization is applied before each sub-layer rather than after.
+
+The Pre-LN pattern has several advantages:
+
+1. More stable training: Gradients flow more smoothly through the network
+2. Eliminates need for learning rate warmup in many cases
+3. Better performance on deep networks (12+ layers)
+
+Each sub-layer (attention and MLP) is wrapped in a residual connection: x = x + sublayer(norm(x)). This allows gradients to flow directly through the network and helps with training stability.
+
+Implementation
+
+namespace GPTNet.Layers;
+
+public class TransformerBlock : nn.Module<Tensor, Tensor>
+{
+    public readonly LayerNorm ln1;
+    public readonly LayerNorm ln2;
+    public readonly CausalSelfAttention attn;
+    public readonly GPT2MLP mlp;
+
+    private const double LayerNormEps = 1e-5;
+
+    public TransformerBlock(GPTConfig config) : base("TransformerBlock")
+    {
+        ln1 = nn.LayerNorm(config.EmbDim, eps: LayerNormEps);
+        ln2 = nn.LayerNorm(config.EmbDim, eps: LayerNormEps);
+        attn = new CausalSelfAttention(config);
+        mlp = new GPT2MLP(config);
+
+        RegisterComponents();
+    }
+
+    public override Tensor forward(Tensor x)
+    {
+        x = x + attn.forward(ln1.forward(x));
+        x = x + mlp.forward(ln2.forward(x));
+        return x;
+    }
+}
+
+LayerNorm normalizes across the embedding dimension for each token independently, ensuring the activations have mean 0 and variance 1. The epsilon parameter (1e-5) prevents division by zero when the variance is very small.
+
+The compact implementation belies the complexity of what's happening: Each block performs billions of operations, computing attention over all pairs of tokens and transforming representations through high-dimensional spaces.
+
+
+8. Full Model Assembly
+
+The complete GPT-2 model stacks 12 transformer blocks between the embedding layer and the output head. The final architecture processes tokens through progressively more abstract representations, ultimately producing probability distributions over the vocabulary.
+
+Weight Tying
+
+GPT-2 uses weight tying between the token embedding matrix and the output projection (language modeling head). Instead of learning a separate 768×50257 matrix for the final projection, the model reuses the transposed token embedding matrix.
+
+This reduces the parameter count by about 38 million parameters and provides a form of regularization—tokens that are semantically similar will have similar embeddings and similar output biases.
+
+Implementation
+
+namespace GPTNet.Model;
+
+public class GPT2Model : nn.Module<Tensor, Tensor>
+{
+    public readonly GPT2Embeddings embeddings;
+    public readonly ModuleList<TransformerBlock> blocks;
+    public readonly LayerNorm ln_f;
+
+    private readonly GPTConfig _config;
+    private const double LayerNormEps = 1e-5;
+
+    public GPT2Model(GPTConfig config) : base("GPT2Model")
+    {
+        _config = config;
+
+        embeddings = new GPT2Embeddings(config);
+
+        var blockList = new List<TransformerBlock>();
+        for (int i = 0; i < config.NLayers; i++)
+        {
+            blockList.Add(new TransformerBlock(config));
+        }
+        blocks = new ModuleList<TransformerBlock>(blockList.ToArray());
+
+        ln_f = nn.LayerNorm(config.EmbDim, eps: LayerNormEps);
+
+        RegisterComponents();
+    }
+
+    public override Tensor forward(Tensor inputIds)
+    {
+        var x = embeddings.forward(inputIds);
+
+        foreach (var block in blocks)
+        {
+            x = block.forward(x);
+        }
+
+        x = ln_f.forward(x);
+
+        var logits = torch.matmul(x, embeddings.GetTokenEmbeddingWeight().T);
+
+        return logits;
+    }
+
+    public long CountParameters()
+    {
+        long total = 0;
+        foreach (var param in parameters())
+        {
+            total += param.numel();
+        }
+        return total;
+    }
+}
+
+The final LayerNorm (ln_f) normalizes the output of the last transformer block before the language modeling head. This ensures the activations going into the final projection are well-scaled.
+
+The forward pass produces logits rather than probabilities. Logits are the raw scores before softmax. During inference, we typically select the token with the highest logit (greedy decoding) or sample from the distribution after applying softmax and temperature scaling.
+
+
+9. Loading Pre-trained Weights
+
+Training GPT-2 from scratch requires massive compute resources—hundreds of GPU-hours on large datasets. Instead, we can leverage pre-trained weights from Hugging Face, which distributes GPT-2 in the safetensors format.
+
+Safetensors Format
+
+Safetensors is a modern format for storing neural network weights that offers several advantages over pickle-based formats:
+
+- Security: No arbitrary code execution vulnerabilities
+- Memory efficiency: Supports lazy loading and memory mapping
+- Fast: Optimized binary format with minimal overhead
+- Cross-platform: Works across Python, Rust, C++, and now C# via TorchSharp.PyBridge
+
+Key Mapping
+
+Hugging Face uses different naming conventions than our C# implementation. The weight loader must map between these conventions:
+
+- HF: "wte.weight" → C#: embeddings.wte.weight
+- HF: "h.0.ln_1.weight" → C#: blocks[0].ln1.weight
+- HF: "h.0.attn.c_attn.weight" → C#: blocks[0].attn.c_attn.weight
+
+Weight Transposition
+
+Hugging Face GPT-2 uses Conv1D layers for linear transformations, which store weights as [in_features, out_features]. TorchSharp Linear layers expect [out_features, in_features]. All linear layer weights must be transposed when loading.
+
+Embeddings and LayerNorm parameters do not need transposition.
+
+Implementation
+
+namespace GPTNet.Utils;
+
+public static class WeightLoader
+{
+    public static void LoadWeights(GPT2Model model, string path, Device device, bool strict = false)
+    {
+        Console.WriteLine($"Loading weights from: {path}");
+        
+        var weights = model.load_safetensors(path, strict: strict, skip: new[] { 
+            "h.0.attn.bias", "h.1.attn.bias", "h.2.attn.bias", "h.3.attn.bias",
+            "h.4.attn.bias", "h.5.attn.bias", "h.6.attn.bias", "h.7.attn.bias",
+            "h.8.attn.bias", "h.9.attn.bias", "h.10.attn.bias", "h.11.attn.bias"
+        });
+        
+        Console.WriteLine($"✓ Weights loaded successfully!");
+    }
+}
+
+The skip parameter tells the loader to ignore the precomputed causal bias tensors stored in the Hugging Face weights. These are constant masks that we compute dynamically, so there's no need to load them.
+
+After loading weights, verify the model produces sensible outputs by running a test inference. If you see random gibberish, check for transposition errors or missing weight mappings.
+
+
+10. Text Generation & Inference
+
+With the model assembled and weights loaded, we can generate text using autoregressive sampling. The generation loop repeatedly predicts the next token and appends it to the sequence.
+
+Tokenization
+
+Before feeding text to the model, we must convert it to token IDs using the same BPE tokenizer that GPT-2 was trained with. Microsoft.ML.Tokenizers provides a TikToken implementation compatible with GPT-2:
+
+namespace GPTNet.Utils;
+
+public class GPT2Tokenizer
+{
+    private readonly Tokenizer _tokenizer;
+
+    private GPT2Tokenizer(Tokenizer tokenizer)
+    {
+        _tokenizer = tokenizer;
+    }
+    
+    public static GPT2Tokenizer CreateDefault()
+    {
+        var tokenizer = TiktokenTokenizer.CreateForModel("gpt-2");
+        return new GPT2Tokenizer(tokenizer);
+    }
+
+    public int[] Encode(string text)
+    {
+        var result = _tokenizer.EncodeToIds(text);
+        return result.ToArray();
+    }
+
+    public string Decode(IEnumerable<int> tokenIds)
+    {
+        return _tokenizer.Decode(tokenIds) ?? "";
+    }
+}
+
+Autoregressive Generation
+
+The generation loop follows this pattern:
+
+1. Encode the prompt text to token IDs
+2. Feed the token sequence to the model to get logits
+3. Select the next token (greedy or sampling)
+4. Append the token to the sequence
+5. Repeat steps 2-4 until desired length or end token
+
+Example generation code:
+
+var tokenizer = GPT2Tokenizer.CreateDefault();
+var prompt = "The future of artificial intelligence";
+var inputTokens = tokenizer.Encode(prompt);
+var generatedTokens = new List<int>(inputTokens);
+
+var maxNewTokens = 50;
+
+for (int i = 0; i < maxNewTokens; i++)
+{
+    var inputTensor = tensor(generatedTokens.Select(t => (long)t).ToArray(), device: device)
+        .unsqueeze(0);
+    
+    var logits = model.forward(inputTensor);
+    var nextTokenLogits = logits[0, -1];
+    var nextToken = nextTokenLogits.argmax().ToInt32();
+    
+    generatedTokens.Add(nextToken);
+    
+    var tokenText = tokenizer.DecodeToken(nextToken);
+    Console.Write(tokenText);
+}
+
+Greedy decoding (selecting the highest probability token) is deterministic but can be repetitive. For more creative outputs, implement sampling strategies like:
+
+- Temperature scaling: Divide logits by a temperature parameter before softmax
+- Top-k sampling: Only sample from the k most likely tokens
+- Top-p (nucleus) sampling: Sample from the smallest set of tokens whose cumulative probability exceeds p
+
+The model processes the entire sequence on each iteration because transformers are context-aware—the representation of each token depends on all previous tokens. For efficiency, implement KV-caching to avoid recomputing attention for past tokens.
+
+
+11. Conclusion
+
+Building GPT-2 from scratch in C# with TorchSharp provides invaluable insights into how large language models work under the hood. Through this implementation, you've learned:
+
+- How token and position embeddings create the initial representation
+- Why causal masking is essential for autoregressive language modeling
+- How multi-head attention allows the model to focus on different aspects of context
+- The role of feed-forward networks in transforming representations
+- How residual connections and layer normalization stabilize deep networks
+- The engineering decisions behind weight tying and architectural choices
+- How to load and use pre-trained weights from the Python ecosystem
+- The mechanics of autoregressive text generation
+
+This implementation demonstrates that sophisticated AI capabilities are accessible in the .NET ecosystem. TorchSharp brings GPU-accelerated tensor operations to C#, making it feasible to build and deploy production-grade language models in .NET applications.
+
+Key Learnings
+
+1. Transformers are remarkably elegant: The core attention mechanism is conceptually simple but powerful
+2. Architecture details matter: Pre-LayerNorm vs Post-LayerNorm significantly affects training stability
+3. Computational efficiency is critical: Each forward pass involves billions of operations
+4. Weight loading requires careful attention: Transposition and key mapping are common pitfalls
+
+Next Steps
+
+To extend this implementation, consider:
+
+- Implementing KV-cache for faster inference
+- Adding top-k and top-p sampling for more diverse generation
+- Fine-tuning on domain-specific data using gradient descent
+- Scaling to GPT-2 Medium (345M parameters) or Large (774M parameters)
+- Implementing Flash Attention for memory-efficient attention computation
+- Adding support for chat-based prompting with role-based formatting
+
+Resources
+
+- GPT-2 Paper: "Language Models are Unsupervised Multitask Learners" (Radford et al., 2019)
+- TorchSharp Documentation: https://github.com/dotnet/TorchSharp
+- Hugging Face Transformers: https://huggingface.co/docs/transformers
+- Attention Is All You Need: Original Transformer paper (Vaswani et al., 2017)
+
+Understanding LLM internals at this level empowers you to make informed architectural decisions, debug model behavior, and innovate on existing designs. The principles you've learned here apply to modern models like GPT-3, GPT-4, and LLaMA—they're all variations on the transformer architecture you've just implemented.
